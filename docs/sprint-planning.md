@@ -9,14 +9,14 @@
 - **Remaining:** 10 Story Points
 
 ### Completed Stories
-- ✅ US-001: Basic MCP Server Template (3 SP) - Created foundation MCP server with 98% test coverage
-- ✅ US-004: Platform Capability Documentation (2 SP) - Comprehensive platform analysis with benchmarks
+- ✅ US-001: Basic MCP Server Template (3 SP) - **MERGED & CLOSED** - Foundation MCP server with 98% test coverage
+- ✅ US-004: Platform Capability Documentation (2 SP) - **MERGED & CLOSED** - Comprehensive platform analysis with benchmarks
 
 ### Sprint Backlog (15 Story Points Total)
 
 #### US-001: Basic MCP Server Template (3 SP) 🏗️ ✅
 - **Assignee:** Completed
-- **Status:** Done (Branch: feature/US-001-basic-mcp-server-template)
+- **Status:** MERGED & CLOSED (Issue #1 closed, PR #31 merged)
 - **Acceptance Criteria:**
   - [x] Template includes minimal MCP protocol implementation
   - [x] Basic error handling and logging are configured
@@ -46,7 +46,7 @@
 
 #### US-004: Platform Capability Documentation (2 SP) 📖 ✅
 - **Assignee:** Completed
-- **Status:** Done (Branch: feature/US-004-platform-capability-documentation)
+- **Status:** MERGED & CLOSED (Issue #4 closed, PR #32 merged)
 - **Acceptance Criteria:**
   - [x] Document Cursor's 40-tool limit and workarounds
   - [x] Document Claude Code's full MCP support
