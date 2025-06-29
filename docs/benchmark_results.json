@@ -1,0 +1,41 @@
+{
+  "timestamp": 1751228073.9613552,
+  "system_info": {
+    "platform": "linux",
+    "python_version": "3.13.3 (main, Jun 16 2025, 18:15:32) [GCC 14.2.0]",
+    "cpu_count": 4,
+    "memory_total": 12498960384,
+    "disk_usage": 40844427264
+  },
+  "benchmarks": {
+    "file_operations": {
+      "file_creation_time": 0.002044677734375,
+      "file_reading_time": 0.0013713836669921875,
+      "file_deletion_time": 0.0006835460662841797,
+      "total_time": 0.004099607467651367,
+      "files_per_second": 24392.579238150625
+    },
+    "memory_usage": {
+      "rss_mb": 13.046875,
+      "vms_mb": 32.41796875,
+      "percent": 0.10945422322893891
+    },
+    "cpu_usage": {
+      "process_cpu_percent": 0.0,
+      "system_cpu_percent": 55.4,
+      "cpu_count": 4.0
+    },
+    "subprocess": {
+      "subprocess_creation_time": 0.008462667465209961,
+      "processes_per_second": 1181.6605155655727,
+      "average_time_per_process": 0.0008462667465209961
+    },
+    "json_processing": {
+      "json_serialize_time": 0.0011942386627197266,
+      "json_deserialize_time": 0.0011341571807861328,
+      "total_time": 0.0023283958435058594,
+      "data_size_mb": 0.12944793701171875,
+      "items_per_second": 429480.23755887774
+    }
+  }
+}
