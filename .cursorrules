@@ -1,0 +1,306 @@
+name: "Multi-Agent Development System"
+description: "A sophisticated system that coordinates multiple AI coding assistants (Cursor and Claude Code) acting as specialized developers. Uses Model Context Protocol (MCP) for tool integration and custom coordination layers for agent communication and workflow orchestration."
+
+# Cursor Development Rules for Multi-Agent Development System
+
+## 1. Project Context & Architecture
+
+### 1.1 System Overview
+- **Purpose:** Coordinate AI coding agents as a unified development team
+- **Architecture:** MCP-based coordination with custom orchestration layers
+- **Platforms:** Support for both Cursor and Claude Code agents
+- **Current Phase:** Foundation & Proof of Concept
+
+### 1.2 Technology Stack
+- **MCP Servers:** Node.js/Python for protocol implementation
+- **Agent Framework:** Python with async/await patterns
+- **Message Queue:** Redis/RabbitMQ for inter-agent communication
+- **State Management:** Event sourcing with persistent storage
+- **Infrastructure:** Docker, Kubernetes for deployment
+
+### 1.3 Key Design Principles
+- **Platform-Agnostic:** Core infrastructure works with any MCP-compatible client
+- **Event-Driven:** Asynchronous messaging for agent coordination
+- **Fault-Tolerant:** Circuit breakers, rollback mechanisms
+- **Observable:** Comprehensive monitoring and tracing
+
+## 2. Development Environment & Setup
+
+### 2.1 Python Development (MANDATORY Virtual Environment)
+- **Virtual Environment:** ALWAYS required for consistency
+- **Setup Commands:**
+  ```bash
+  python -m venv venv
+  source venv/bin/activate  # Linux/Mac
+  # or
+  venv\Scripts\activate     # Windows
+  pip install -r requirements.txt
+  ```
+
+### 2.2 Node.js Development (for MCP Servers)
+- **Node Version:** Use Node 18+ LTS
+- **Package Manager:** npm or yarn
+- **Setup Commands:**
+  ```bash
+  npm install
+  npm run dev     # Development mode with hot reload
+  npm test        # Run tests
+  ```
+
+### 2.3 Docker Development
+- **Local Services:**
+  ```bash
+  docker-compose up -d      # Start all MCP servers
+  docker-compose logs -f    # Watch logs
+  docker-compose down       # Stop services
+  ```
+
+## 3. Mandatory Development Approach: Test-Driven Development (TDD)
+
+### 3.1 TDD Red-Green-Refactor Cycle
+1. **Red:** Write a failing test that captures the requirement
+2. **Green:** Write minimum code to make the test pass
+3. **Refactor:** Improve code structure while keeping tests passing
+
+### 3.2 Coverage Requirements
+- **Minimum Coverage:** 85% for all MCP servers
+- **Critical Paths:** 95% coverage for coordination logic
+- **Integration Tests:** Required for all agent interactions
+
+### 3.3 Test Structure
+- **Unit Tests:** Mock external dependencies
+- **Integration Tests:** Test MCP protocol compliance
+- **System Tests:** Multi-agent scenario testing
+- **Chaos Tests:** Failure mode testing
+
+## 4. File Structure & Architecture
+
+### 4.1 MCP Servers Structure
+```
+mcp-servers/
+├── task-coordinator/
+│   ├── src/
+│   │   ├── handlers/        # Request handlers
+│   │   ├── services/        # Business logic
+│   │   ├── models/          # Data models
+│   │   └── utils/           # Utilities
+│   ├── tests/
+│   ├── package.json
+│   └── index.js
+├── shared-workspace/
+├── message-queue/
+├── documentation-hub/
+└── shared/                  # Shared utilities
+```
+
+### 4.2 Agent Framework Structure
+```
+agent-framework/
+├── core/
+│   ├── base_agent.py        # Base agent class
+│   ├── mcp_client.py        # MCP protocol client
+│   ├── state_manager.py     # Agent state management
+│   └── communication.py     # Inter-agent messaging
+├── agents/
+│   ├── ba_pm/              # Business Analyst/PM agent
+│   ├── backend_dev/        # Backend Developer agent
+│   ├── frontend_dev/       # Frontend Developer agent
+│   └── tester/             # Testing agents
+├── utils/
+└── tests/
+```
+
+### 4.3 Configuration Structure
+```
+configs/
+├── agents/                  # Agent-specific configs
+├── mcp-servers/            # MCP server configs
+├── platforms/              # Platform-specific settings
+│   ├── cursor.json
+│   └── claude_code.json
+└── environments/           # Environment configs
+```
+
+## 5. Code Quality & Standards
+
+### 5.1 Python Standards
+- **Style:** PEP 8 compliance with `black` formatter
+- **Type Hints:** Required for all functions and methods
+- **Docstrings:** Google style for all public APIs
+- **Async/Await:** Required for all I/O operations
+- **Error Handling:** Custom exceptions with proper context
+
+### 5.2 JavaScript/TypeScript Standards
+- **Style:** ESLint with Prettier
+- **Types:** TypeScript for MCP servers
+- **Promises:** Async/await over callbacks
+- **Error Handling:** Proper error boundaries
+
+### 5.3 MCP Protocol Standards
+- **Compliance:** Strict adherence to MCP specification
+- **Versioning:** Support protocol version negotiation
+- **Timeouts:** 30-second default, configurable
+- **Retries:** Exponential backoff for transient failures
+
+## 6. Agent Development Guidelines
+
+### 6.1 Agent Lifecycle
+- **Initialization:** Load configuration, establish MCP connections
+- **Health Checks:** Regular heartbeat and capability reporting
+- **Task Processing:** Async task queue with priority handling
+- **Shutdown:** Graceful shutdown with task completion
+
+### 6.2 Inter-Agent Communication
+- **Message Format:** Structured with correlation IDs
+- **Channels:** Topic-based pub/sub patterns
+- **Persistence:** Message history for debugging
+- **Ordering:** Guaranteed ordering within channels
+
+### 6.3 State Management
+- **Event Sourcing:** All state changes as events
+- **Snapshots:** Periodic state snapshots
+- **Recovery:** Replay events from last snapshot
+- **Consistency:** Eventually consistent across agents
+
+## 7. Git Workflow & Branch Management
+
+### 7.1 Branching Strategy
+- **main:** Stable, tested code only
+- **develop:** Integration branch
+- **feature/:** Feature development
+- **fix/:** Bug fixes
+- **poc/:** Proof of concept branches
+
+### 7.2 Commit Standards
+- **Format:** Conventional commits (`feat:`, `fix:`, `test:`)
+- **Scope:** Include component (`feat(task-coordinator): add priority queue`)
+- **Tests:** Every commit must pass all tests
+- **Size:** Small, focused commits
+
+### 7.3 Pull Request Process
+- **Reviews:** Required before merge
+- **Tests:** All CI checks must pass
+- **Documentation:** Update relevant docs
+- **Demo:** Include demo/screenshot for UI changes
+
+## 8. Testing Strategy
+
+### 8.1 MCP Server Testing
+- **Protocol Tests:** Validate MCP compliance
+- **Handler Tests:** Unit test each handler
+- **Integration Tests:** Multi-server scenarios
+- **Load Tests:** Performance under concurrent agents
+
+### 8.2 Agent Testing
+- **Behavior Tests:** Validate agent decisions
+- **Communication Tests:** Message passing
+- **Failure Tests:** Error handling scenarios
+- **Scenario Tests:** End-to-end workflows
+
+### 8.3 System Testing
+- **Multi-Agent Tests:** Full team simulations
+- **Chaos Engineering:** Random failure injection
+- **Performance Tests:** Scalability validation
+- **Recovery Tests:** Disaster recovery scenarios
+
+## 9. Monitoring & Observability
+
+### 9.1 Metrics
+- **Agent Metrics:** Task completion, response times
+- **System Metrics:** CPU, memory, network usage
+- **Business Metrics:** Productivity, quality scores
+- **Error Metrics:** Failure rates, recovery times
+
+### 9.2 Logging
+- **Structured Logging:** JSON format with context
+- **Correlation IDs:** Trace requests across agents
+- **Log Levels:** Appropriate use of DEBUG/INFO/WARN/ERROR
+- **Retention:** 30-day retention for debugging
+
+### 9.3 Tracing
+- **Distributed Tracing:** OpenTelemetry integration
+- **Span Context:** Propagate across MCP calls
+- **Visualization:** Jaeger or similar
+- **Sampling:** Adaptive sampling for performance
+
+## 10. Security Considerations
+
+### 10.1 Authentication
+- **Agent Identity:** Unique agent IDs with certificates
+- **MCP Security:** Token-based authentication
+- **Rotation:** Regular credential rotation
+- **Audit:** All authentication attempts logged
+
+### 10.2 Authorization
+- **Role-Based:** Agent capabilities by role
+- **Resource Access:** Fine-grained permissions
+- **Least Privilege:** Minimal required access
+- **Dynamic:** Runtime permission checks
+
+### 10.3 Data Protection
+- **Encryption:** TLS for all communications
+- **Secrets:** Vault or similar for sensitive data
+- **Isolation:** Agent workspace isolation
+- **Compliance:** GDPR considerations for logs
+
+## 11. Documentation Standards
+
+### 11.1 Code Documentation
+- **README:** Every component has clear README
+- **API Docs:** OpenAPI/AsyncAPI specifications
+- **Architecture:** Decision records (ADRs)
+- **Runbooks:** Operational procedures
+
+### 11.2 User Documentation
+- **Setup Guide:** Step-by-step installation
+- **Configuration:** All options documented
+- **Troubleshooting:** Common issues and solutions
+- **Examples:** Working examples for each feature
+
+## 12. Development Best Practices
+
+### 12.1 Code Organization
+- **Single Responsibility:** One purpose per module
+- **DRY Principle:** Avoid duplication
+- **SOLID Principles:** For maintainable design
+- **Clean Code:** Readable, self-documenting
+
+### 12.2 Error Handling
+- **Fail Fast:** Validate early
+- **Graceful Degradation:** Fallback mechanisms
+- **Recovery:** Automatic recovery where possible
+- **Observability:** Log all errors with context
+
+### 12.3 Performance
+- **Async First:** Non-blocking operations
+- **Resource Pooling:** Connection/worker pools
+- **Caching:** Strategic caching for performance
+- **Monitoring:** Track performance metrics
+
+### 12.4 Platform-Specific Considerations
+- **Cursor Limits:** Work within 40-tool constraint
+- **Claude Code Features:** Leverage full MCP capabilities
+- **Compatibility:** Test on both platforms
+- **Fallbacks:** Handle platform differences gracefully
+
+## 13. Deployment Guidelines
+
+### 13.1 Local Development
+- **Docker Compose:** Full stack locally
+- **Hot Reload:** Development productivity
+- **Debug Mode:** Enhanced logging/tracing
+- **Test Data:** Realistic test scenarios
+
+### 13.2 Production Readiness
+- **Health Checks:** Liveness and readiness probes
+- **Resource Limits:** CPU/memory constraints
+- **Scaling:** Horizontal scaling ready
+- **Rollback:** Quick rollback procedures
+
+### 13.3 CI/CD Pipeline
+- **Build:** Automated builds on commit
+- **Test:** Full test suite execution
+- **Security:** Vulnerability scanning
+- **Deploy:** Staged deployment process
+
+**Following these rules ensures a robust, scalable multi-agent development system that can coordinate AI coding assistants effectively.** 
