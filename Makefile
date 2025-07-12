@@ -179,9 +179,9 @@ test-us007: ## Run US-007 channel management tests specifically
 
 test-coverage: ## Run tests with coverage report
 	@echo "$(CYAN)Running tests with coverage...$(RESET)"
-	cd mcp-servers/message-queue && $(VENV_PATH) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
-	cd mcp-servers/template && $(VENV_PATH) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
-	cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+	cd mcp-servers/message-queue && $(VENV_PATH) -m coverage run -m pytest tests/ && $(VENV_PATH) -m coverage report && $(VENV_PATH) -m coverage html
+	cd mcp-servers/template && $(VENV_PATH) -m coverage run -m pytest tests/ && $(VENV_PATH) -m coverage report && $(VENV_PATH) -m coverage html
+	cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m coverage run -m pytest tests/ && $(TASK_COORD_PATH) -m coverage report && $(TASK_COORD_PATH) -m coverage html
 	@echo "$(GREEN)✅ Coverage reports generated!$(RESET)"
 
 test-coverage-all: ## Run all tests with combined coverage report
