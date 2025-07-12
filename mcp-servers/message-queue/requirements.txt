@@ -11,6 +11,9 @@
 # uuid (built-in) - for message IDs
 # time (built-in) - for timestamps and performance monitoring
 
+# MCP SDK for official protocol implementation
+mcp
+
 # Development and testing dependencies (optional)
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
