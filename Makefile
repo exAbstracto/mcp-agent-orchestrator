@@ -11,13 +11,18 @@ YELLOW = \033[33m
 RED = \033[31m
 RESET = \033[0m
 
-# Python executable paths
+# Python executable paths  
 VENV_PYTHON = $(shell pwd)/mcp-servers/venv/bin/python
+TASK_COORD_PYTHON = $(shell pwd)/mcp-servers/task-coordinator/venv/bin/python
 SYSTEM_PYTHON = python3
 
 # Check if venv exists and define Python command
 PYTHON_CMD = $(shell if [ -f $(VENV_PYTHON) ]; then echo "$(VENV_PYTHON)"; else echo "$(SYSTEM_PYTHON)"; fi)
 PYTHON = $(PYTHON_CMD)
+
+# Component-specific Python paths (absolute paths for reliability)
+VENV_PATH = $(shell pwd)/mcp-servers/venv/bin/python
+TASK_COORD_PATH = $(shell pwd)/mcp-servers/task-coordinator/venv/bin/python
 
 ##@ General
 
@@ -77,10 +82,10 @@ real-mcp-server: ## Start the real MCP coordination server
 
 test: ## Run all tests
 	@echo "$(CYAN)Running all tests...$(RESET)"
-	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v
-	cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v
-	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v
-	$(PYTHON) -m pytest tests/test_makefile_commands.py -v --tb=short
+	cd mcp-servers/message-queue && $(VENV_PATH) -m pytest tests/ -v
+	cd mcp-servers/template && $(VENV_PATH) -m pytest tests/ -v
+	cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m pytest tests/ -v
+	$(VENV_PATH) -m pytest tests/test_makefile_commands.py -v --tb=short
 	@echo "$(GREEN)✅ All tests completed!$(RESET)"
 
 test-all-recursive: ## Run ALL tests from ALL subcomponents recursively
@@ -89,22 +94,22 @@ test-all-recursive: ## Run ALL tests from ALL subcomponents recursively
 	@# Message Queue tests (including US-007)
 	@if [ -d "mcp-servers/message-queue/tests" ]; then \
 		echo "$(CYAN)🔍 Running Message Queue tests (including US-007)...$(RESET)"; \
-		cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v --tb=short; \
+		cd mcp-servers/message-queue && $(VENV_PATH) -m pytest tests/ -v --tb=short; \
 	fi
 	@# Template tests
 	@if [ -d "mcp-servers/template/tests" ]; then \
 		echo "$(CYAN)🔍 Running Template tests...$(RESET)"; \
-		cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v --tb=short; \
+		cd mcp-servers/template && $(VENV_PATH) -m pytest tests/ -v --tb=short; \
 	fi
 	@# Task Coordinator tests
 	@if [ -d "mcp-servers/task-coordinator/tests" ]; then \
 		echo "$(CYAN)🔍 Running Task Coordinator tests...$(RESET)"; \
-		cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v --tb=short; \
+		cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m pytest tests/ -v --tb=short; \
 	fi
 	@# Root-level tests
 	@if [ -d "tests" ]; then \
 		echo "$(CYAN)🔍 Running Root-level tests...$(RESET)"; \
-		$(PYTHON) -m pytest tests/ -v --tb=short; \
+		$(VENV_PATH) -m pytest tests/ -v --tb=short; \
 	fi
 	@# Discover any additional test directories
 	@echo "$(CYAN)🔍 Scanning for additional test directories...$(RESET)"
@@ -157,26 +162,26 @@ test-count: ## Count all tests across the project
 
 test-message-queue: ## Run message queue tests only
 	@echo "$(CYAN)Running Message Queue tests...$(RESET)"
-	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v
+	cd mcp-servers/message-queue && $(VENV_PATH) -m pytest tests/ -v
 
 test-template: ## Run template server tests only
 	@echo "$(CYAN)Running Template server tests...$(RESET)"
-	cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v
+	cd mcp-servers/template && $(VENV_PATH) -m pytest tests/ -v
 
 test-task-coordinator: ## Run task coordinator tests only
 	@echo "$(CYAN)Running Task Coordinator tests...$(RESET)"
-	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v
+	cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m pytest tests/ -v
 
 test-us007: ## Run US-007 channel management tests specifically
 	@echo "$(CYAN)Running US-007 Channel Management tests...$(RESET)"
-	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/test_us007_channel_management.py -v
+	cd mcp-servers/message-queue && $(VENV_PATH) -m pytest tests/test_us007_channel_management.py -v
 	@echo "$(GREEN)✅ US-007 tests completed!$(RESET)"
 
 test-coverage: ## Run tests with coverage report
 	@echo "$(CYAN)Running tests with coverage...$(RESET)"
-	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
-	cd mcp-servers/template && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
-	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+	cd mcp-servers/message-queue && $(VENV_PATH) -m coverage run -m pytest tests/ && $(VENV_PATH) -m coverage report && $(VENV_PATH) -m coverage html
+	cd mcp-servers/template && $(VENV_PATH) -m coverage run -m pytest tests/ && $(VENV_PATH) -m coverage report && $(VENV_PATH) -m coverage html
+	cd mcp-servers/task-coordinator && $(TASK_COORD_PATH) -m coverage run -m pytest tests/ && $(TASK_COORD_PATH) -m coverage report && $(TASK_COORD_PATH) -m coverage html
 	@echo "$(GREEN)✅ Coverage reports generated!$(RESET)"
 
 test-coverage-all: ## Run all tests with combined coverage report

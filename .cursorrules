@@ -165,8 +165,8 @@ configs/
 ## 7. Git Workflow & Branch Management
 
 ### 7.1 Branching Strategy
-- **main:** Stable, tested code only
-- **develop:** Integration branch
+- **main:** Stable, tested code only - NEVER commit directly to main!
+- **develop:** Integration branch - NEVER commit directly to develop, use PRs instead
 - **feature/:** Feature development
 - **fix/:** Bug fixes
 - **poc/:** Proof of concept branches
