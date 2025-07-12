@@ -1,0 +1,18 @@
+# Task Coordinator MCP Server Dependencies
+# Core dependencies for task management and coordination
+
+# No external dependencies required - uses only Python standard library
+# asyncio (built-in) - for async operations
+# json (built-in) - for JSON-RPC protocol
+# logging (built-in) - for logging
+# dataclasses (built-in) - for data structures  
+# collections (built-in) - for defaultdict
+# typing (built-in) - for type hints
+# uuid (built-in) - for task ID generation
+# time (built-in) - for timestamps
+# enum (built-in) - for status and priority enums
+
+# Development and testing dependencies (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0 
