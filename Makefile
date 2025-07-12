@@ -83,6 +83,78 @@ test: ## Run all tests
 	$(PYTHON) -m pytest tests/test_makefile_commands.py -v --tb=short
 	@echo "$(GREEN)✅ All tests completed!$(RESET)"
 
+test-all-recursive: ## Run ALL tests from ALL subcomponents recursively
+	@echo "$(CYAN)Running all tests recursively across entire project...$(RESET)"
+	@echo "$(YELLOW)Discovering and running tests from all components...$(RESET)"
+	@# Message Queue tests (including US-007)
+	@if [ -d "mcp-servers/message-queue/tests" ]; then \
+		echo "$(CYAN)🔍 Running Message Queue tests (including US-007)...$(RESET)"; \
+		cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v --tb=short; \
+	fi
+	@# Template tests
+	@if [ -d "mcp-servers/template/tests" ]; then \
+		echo "$(CYAN)🔍 Running Template tests...$(RESET)"; \
+		cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v --tb=short; \
+	fi
+	@# Task Coordinator tests
+	@if [ -d "mcp-servers/task-coordinator/tests" ]; then \
+		echo "$(CYAN)🔍 Running Task Coordinator tests...$(RESET)"; \
+		cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v --tb=short; \
+	fi
+	@# Root-level tests
+	@if [ -d "tests" ]; then \
+		echo "$(CYAN)🔍 Running Root-level tests...$(RESET)"; \
+		$(PYTHON) -m pytest tests/ -v --tb=short; \
+	fi
+	@# Discover any additional test directories
+	@echo "$(CYAN)🔍 Scanning for additional test directories...$(RESET)"
+	@find . -name "tests" -type d ! -path "./.*" ! -path "./*/venv/*" ! -path "./*/node_modules/*" | while read dir; do \
+		if [ -f "$$dir/test_*.py" ] || [ -f "$$dir/**/test_*.py" ]; then \
+			echo "$(YELLOW)Found additional test directory: $$dir$(RESET)"; \
+			parent_dir=$$(dirname $$dir); \
+			if [ -f "$$parent_dir/requirements.txt" ] && [ ! -d "$$parent_dir/venv" ]; then \
+				echo "$(YELLOW)Setting up venv for $$parent_dir$(RESET)"; \
+				cd $$parent_dir && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt; \
+			fi; \
+			cd $$parent_dir && $(PYTHON) -m pytest tests/ -v --tb=short 2>/dev/null || echo "$(RED)Failed to run tests in $$dir$(RESET)"; \
+		fi; \
+	done
+	@echo "$(GREEN)✅ All recursive tests completed!$(RESET)"
+
+test-discover: ## Discover all test files across the project
+	@echo "$(CYAN)Discovering all test files in the project...$(RESET)"
+	@echo "$(YELLOW)Test file discovery:$(RESET)"
+	@find . -name "test_*.py" -type f ! -path "./.*" ! -path "./*/venv/*" ! -path "./*/node_modules/*" | while read file; do \
+		echo "  📝 $$file"; \
+	done
+	@echo ""
+	@echo "$(YELLOW)Test directory discovery:$(RESET)"
+	@find . -name "tests" -type d ! -path "./.*" ! -path "./*/venv/*" ! -path "./*/node_modules/*" | while read dir; do \
+		test_count=$$(find $$dir -name "test_*.py" | wc -l); \
+		echo "  📁 $$dir ($$test_count test files)"; \
+	done
+	@echo ""
+	@echo "$(CYAN)Total test files:$(RESET) $$(find . -name "test_*.py" -type f ! -path "./.*" ! -path "./*/venv/*" ! -path "./*/node_modules/*" | wc -l)"
+
+test-count: ## Count all tests across the project  
+	@echo "$(CYAN)Counting all tests across the project...$(RESET)"
+	@echo "$(YELLOW)Test counts by component:$(RESET)"
+	@if [ -d "mcp-servers/message-queue/tests" ]; then \
+		cd mcp-servers/message-queue && count=$$(find tests/ -name "test_*.py" | wc -l) && echo "  📊 Message Queue: $$count test files (includes US-007)"; \
+	fi
+	@if [ -d "mcp-servers/template/tests" ]; then \
+		cd mcp-servers/template && count=$$(find tests/ -name "test_*.py" | wc -l) && echo "  📊 Template: $$count test files"; \
+	fi
+	@if [ -d "mcp-servers/task-coordinator/tests" ]; then \
+		cd mcp-servers/task-coordinator && count=$$(find tests/ -name "test_*.py" | wc -l) && echo "  📊 Task Coordinator: $$count test files"; \
+	fi
+	@if [ -d "tests" ]; then \
+		count=$$(find tests/ -name "test_*.py" | wc -l) && echo "  📊 Root Tests: $$count test files"; \
+	fi
+	@echo ""
+	@echo "$(GREEN)📈 Total Test Files: $$(find . -name "test_*.py" -type f ! -path "./*/venv/*" | wc -l)$(RESET)"
+	@echo "$(CYAN)Including US-007 tests: ✅ test_us007_channel_management.py$(RESET)"
+
 test-message-queue: ## Run message queue tests only
 	@echo "$(CYAN)Running Message Queue tests...$(RESET)"
 	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v
@@ -95,12 +167,38 @@ test-task-coordinator: ## Run task coordinator tests only
 	@echo "$(CYAN)Running Task Coordinator tests...$(RESET)"
 	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v
 
+test-us007: ## Run US-007 channel management tests specifically
+	@echo "$(CYAN)Running US-007 Channel Management tests...$(RESET)"
+	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/test_us007_channel_management.py -v
+	@echo "$(GREEN)✅ US-007 tests completed!$(RESET)"
+
 test-coverage: ## Run tests with coverage report
 	@echo "$(CYAN)Running tests with coverage...$(RESET)"
 	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 	cd mcp-servers/template && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 	@echo "$(GREEN)✅ Coverage reports generated!$(RESET)"
+
+test-coverage-all: ## Run all tests with combined coverage report
+	@echo "$(CYAN)Running all tests with comprehensive coverage...$(RESET)"
+	@# Create combined coverage directory
+	@mkdir -p coverage-reports
+	@# Message Queue coverage
+	@if [ -d "mcp-servers/message-queue/tests" ]; then \
+		echo "$(CYAN)📊 Message Queue coverage...$(RESET)"; \
+		cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html:../../coverage-reports/message-queue --cov-report=term; \
+	fi
+	@# Template coverage  
+	@if [ -d "mcp-servers/template/tests" ]; then \
+		echo "$(CYAN)📊 Template coverage...$(RESET)"; \
+		cd mcp-servers/template && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html:../../coverage-reports/template --cov-report=term; \
+	fi
+	@# Task Coordinator coverage
+	@if [ -d "mcp-servers/task-coordinator/tests" ]; then \
+		echo "$(CYAN)📊 Task Coordinator coverage...$(RESET)"; \
+		cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ --cov=src --cov-report=html:../../coverage-reports/task-coordinator --cov-report=term; \
+	fi
+	@echo "$(GREEN)✅ Coverage reports generated in coverage-reports/$(RESET)"
 
 test-coordination: ## Run coordination and integration tests
 	@echo "$(CYAN)Running coordination tests...$(RESET)"
@@ -181,6 +279,7 @@ clean: ## Clean up temporary files and caches
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
 	find . -type d -name "htmlcov" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name ".coverage" -delete 2>/dev/null || true
+	rm -rf coverage-reports/ 2>/dev/null || true
 	@echo "$(GREEN)✅ Cleanup complete!$(RESET)"
 
 clean-coordination: ## Clean up coordination demo temporary files
@@ -258,7 +357,7 @@ dev-setup: install install-dev ## Complete development environment setup
 quick-test: clean test ## Clean and run all tests
 	@echo "$(GREEN)✅ Quick test cycle complete!$(RESET)"
 
-test-all: test test-coordination test-makefile ## Run all tests including coordination and makefile tests
+test-all: test-all-recursive test-coordination test-makefile ## Run all tests including coordination and makefile tests
 	@echo "$(GREEN)✅ All comprehensive tests completed!$(RESET)"
 
 ci-check: clean lint type-check test ## Full CI pipeline check

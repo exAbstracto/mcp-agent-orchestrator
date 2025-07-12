@@ -476,11 +476,11 @@ class MessageQueueServer:
                 "subscribed": True,
                 "message_count": len(self.messages.get(channel, [])),
             }
-            
+
             # Include filters in response if provided
             if filters is not None:
                 result["filters"] = filters
-            
+
             return {
                 "jsonrpc": "2.0",
                 "id": request_id,
