@@ -12,11 +12,12 @@ RED = \033[31m
 RESET = \033[0m
 
 # Python executable paths
-VENV_PYTHON = mcp-servers/venv/bin/python
+VENV_PYTHON = $(shell pwd)/mcp-servers/venv/bin/python
 SYSTEM_PYTHON = python3
 
 # Check if venv exists and define Python command
 PYTHON_CMD = $(shell if [ -f $(VENV_PYTHON) ]; then echo "$(VENV_PYTHON)"; else echo "$(SYSTEM_PYTHON)"; fi)
+PYTHON = $(PYTHON_CMD)
 
 ##@ General
 
@@ -64,6 +65,7 @@ test: ## Run all tests
 	@echo "$(CYAN)Running all tests...$(RESET)"
 	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v
 	cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v
+	$(PYTHON) -m pytest tests/test_makefile_commands.py -v --tb=short
 	@echo "$(GREEN)✅ All tests completed!$(RESET)"
 
 test-message-queue: ## Run message queue tests only
@@ -84,6 +86,11 @@ test-coordination: ## Run coordination and integration tests
 	@echo "$(CYAN)Running coordination tests...$(RESET)"
 	cd coordination-demo && $(PYTHON) comprehensive-coordination-test.py
 	cd coordination-demo && $(PYTHON) comprehensive-test.py
+
+test-makefile: ## Run tests for all Makefile commands
+	@echo "$(CYAN)Running Makefile command tests...$(RESET)"
+	$(PYTHON) -m pytest tests/test_makefile_commands.py -v --tb=short
+	@echo "$(GREEN)✅ Makefile tests completed!$(RESET)"
 
 ##@ Code Quality
 
@@ -225,6 +232,9 @@ dev-setup: install install-dev ## Complete development environment setup
 
 quick-test: clean test ## Clean and run all tests
 	@echo "$(GREEN)✅ Quick test cycle complete!$(RESET)"
+
+test-all: test test-coordination test-makefile ## Run all tests including coordination and makefile tests
+	@echo "$(GREEN)✅ All comprehensive tests completed!$(RESET)"
 
 ci-check: clean lint type-check test ## Full CI pipeline check
 	@echo "$(GREEN)✅ CI checks passed!$(RESET)"
