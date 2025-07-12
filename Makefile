@@ -34,11 +34,21 @@ install: ## Install all dependencies and setup virtual environment
 	mcp-servers/venv/bin/pip install --upgrade pip
 	mcp-servers/venv/bin/pip install -r mcp-servers/requirements.txt
 	mcp-servers/venv/bin/pip install -r mcp-servers/message-queue/requirements.txt
+	@echo "$(CYAN)Setting up Task Coordinator environment...$(RESET)"
+	@if [ ! -d "mcp-servers/task-coordinator/venv" ]; then \
+		cd mcp-servers/task-coordinator && python3 -m venv venv && \
+		./venv/bin/pip install --upgrade pip && \
+		./venv/bin/pip install -r requirements.txt; \
+	fi
 	@echo "$(GREEN)✅ Environment setup complete!$(RESET)"
 
 install-dev: ## Install development dependencies (testing, linting, formatting)
 	@echo "$(CYAN)Installing development dependencies...$(RESET)"
 	mcp-servers/venv/bin/pip install pytest pytest-cov pytest-asyncio black flake8 mypy
+	@echo "$(CYAN)Installing Task Coordinator development dependencies...$(RESET)"
+	@if [ -d "mcp-servers/task-coordinator/venv" ]; then \
+		cd mcp-servers/task-coordinator && ./venv/bin/pip install black flake8 mypy; \
+	fi
 	@echo "$(GREEN)✅ Development dependencies installed!$(RESET)"
 
 ##@ MCP Servers
@@ -55,6 +65,10 @@ template-demo: ## Run template MCP server demo
 	@echo "$(CYAN)Running Template MCP Server Demo...$(RESET)"
 	$(PYTHON_CMD) mcp-servers/template/demo.py
 
+task-coordinator-demo: ## Run task coordinator MCP server demo
+	@echo "$(CYAN)Running Task Coordinator MCP Server Demo...$(RESET)"
+	cd mcp-servers/task-coordinator && ./venv/bin/python -c "from src.task_coordinator_server import TaskCoordinatorServer; from src.models.task import Task; server = TaskCoordinatorServer('task-coordinator', '1.0.0'); print('✅ Task Coordinator Server initialized with dependency management'); print('📋 Server capabilities:', list(server.capabilities.get('tools', {}).keys()))"
+
 real-mcp-server: ## Start the real MCP coordination server
 	@echo "$(CYAN)Starting Real MCP Coordination Server...$(RESET)"
 	$(PYTHON_CMD) mcp-servers/real-mcp-server.py agent-001 demo-agent
@@ -65,6 +79,7 @@ test: ## Run all tests
 	@echo "$(CYAN)Running all tests...$(RESET)"
 	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ -v
 	cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v
+	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v
 	$(PYTHON) -m pytest tests/test_makefile_commands.py -v --tb=short
 	@echo "$(GREEN)✅ All tests completed!$(RESET)"
 
@@ -76,10 +91,15 @@ test-template: ## Run template server tests only
 	@echo "$(CYAN)Running Template server tests...$(RESET)"
 	cd mcp-servers/template && $(PYTHON) -m pytest tests/ -v
 
+test-task-coordinator: ## Run task coordinator tests only
+	@echo "$(CYAN)Running Task Coordinator tests...$(RESET)"
+	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ -v
+
 test-coverage: ## Run tests with coverage report
 	@echo "$(CYAN)Running tests with coverage...$(RESET)"
 	cd mcp-servers/message-queue && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 	cd mcp-servers/template && $(PYTHON) -m pytest tests/ --cov=src --cov-report=html --cov-report=term
+	cd mcp-servers/task-coordinator && ./venv/bin/python -m pytest tests/ --cov=src --cov-report=html --cov-report=term
 	@echo "$(GREEN)✅ Coverage reports generated!$(RESET)"
 
 test-coordination: ## Run coordination and integration tests
@@ -98,12 +118,14 @@ lint: ## Run linting checks
 	@echo "$(CYAN)Running linting checks...$(RESET)"
 	@$(PYTHON) -m flake8 mcp-servers/message-queue/src/ --max-line-length=100 2>/dev/null || echo "$(YELLOW)Flake8 not installed - run 'make install-dev'$(RESET)"
 	@$(PYTHON) -m flake8 mcp-servers/template/src/ --max-line-length=100 2>/dev/null || echo "$(YELLOW)Flake8 not installed - run 'make install-dev'$(RESET)"
+	@cd mcp-servers/task-coordinator && ./venv/bin/python -m flake8 src/ --max-line-length=100 2>/dev/null || echo "$(YELLOW)Flake8 not installed - run 'make install-dev'$(RESET)"
 	@$(PYTHON) -m flake8 coordination-demo/*.py --max-line-length=100 2>/dev/null || echo "$(YELLOW)Flake8 not installed - run 'make install-dev'$(RESET)"
 
 format: ## Format code with black
 	@echo "$(CYAN)Formatting code...$(RESET)"
 	@$(PYTHON) -m black mcp-servers/message-queue/src/ 2>/dev/null || echo "$(YELLOW)Black not installed - run 'make install-dev'$(RESET)"
 	@$(PYTHON) -m black mcp-servers/template/src/ 2>/dev/null || echo "$(YELLOW)Black not installed - run 'make install-dev'$(RESET)"
+	@cd mcp-servers/task-coordinator && ./venv/bin/python -m black src/ 2>/dev/null || echo "$(YELLOW)Black not installed - run 'make install-dev'$(RESET)"
 	@$(PYTHON) -m black coordination-demo/*.py 2>/dev/null || echo "$(YELLOW)Black not installed - run 'make install-dev'$(RESET)"
 	@echo "$(GREEN)✅ Code formatting complete!$(RESET)"
 
@@ -111,6 +133,7 @@ type-check: ## Run type checking with mypy
 	@echo "$(CYAN)Running type checks...$(RESET)"
 	@$(PYTHON) -m mypy mcp-servers/message-queue/src/ --ignore-missing-imports 2>/dev/null || echo "$(YELLOW)MyPy not installed - run 'make install-dev'$(RESET)"
 	@$(PYTHON) -m mypy mcp-servers/template/src/ --ignore-missing-imports 2>/dev/null || echo "$(YELLOW)MyPy not installed - run 'make install-dev'$(RESET)"
+	@cd mcp-servers/task-coordinator && ./venv/bin/python -m mypy src/ --ignore-missing-imports 2>/dev/null || echo "$(YELLOW)MyPy not installed - run 'make install-dev'$(RESET)"
 
 ##@ Coordination Demos
 
@@ -185,6 +208,8 @@ health-check: ## Check health of all MCP servers
 	@cd mcp-servers/message-queue && timeout 5 $(PYTHON) -c "from src.message_queue_server import MessageQueueServer; server = MessageQueueServer(); print('✅ Message Queue: OK')" || echo "❌ Message Queue: FAIL"
 	@echo "$(YELLOW)Template Server:$(RESET)"
 	@cd mcp-servers/template && timeout 5 $(PYTHON) -c "from src.mcp_server import MCPServer; server = MCPServer('test', '1.0.0'); print('✅ Template: OK')" || echo "❌ Template: FAIL"
+	@echo "$(YELLOW)Task Coordinator Server:$(RESET)"
+	@cd mcp-servers/task-coordinator && timeout 5 ./venv/bin/python -c "from src.task_coordinator_server import TaskCoordinatorServer; server = TaskCoordinatorServer('test', '1.0.0'); print('✅ Task Coordinator: OK')" || echo "❌ Task Coordinator: FAIL"
 
 ##@ Documentation
 
@@ -239,7 +264,7 @@ test-all: test test-coordination test-makefile ## Run all tests including coordi
 ci-check: clean lint type-check test ## Full CI pipeline check
 	@echo "$(GREEN)✅ CI checks passed!$(RESET)"
 
-demo-all: message-queue-demo template-demo demo-comprehensive ## Run all demos
+demo-all: message-queue-demo template-demo task-coordinator-demo demo-comprehensive ## Run all demos
 	@echo "$(GREEN)✅ All demos completed!$(RESET)"
 
 ##@ Project Info
@@ -255,7 +280,7 @@ info: ## Display project information
 	@echo ""
 	@echo "$(YELLOW)Key Components:$(RESET)"
 	@echo "  🔄 Message Queue       - Async pub/sub messaging (US-003)"
-	@echo "  📋 Task Coordinator    - Task management system (US-005)"
+	@echo "  📋 Task Coordinator    - Dependency management system (US-006)"
 	@echo "  🎭 Multi-Agent Demo    - Agent coordination proof of concept"
 	@echo ""
 	@echo "$(YELLOW)Available User Stories:$(RESET)"
@@ -263,5 +288,6 @@ info: ## Display project information
 	@echo "  ✅ US-002: Multi-Instance Coordination Demo"
 	@echo "  ✅ US-003: Basic Message Queue Implementation"
 	@echo "  ✅ US-004: Platform Capability Documentation"
+	@echo "  ✅ US-006: Task Coordinator - Dependency Management"
 	@echo ""
 	@echo "Run '$(CYAN)make help$(RESET)' for all available commands." 
