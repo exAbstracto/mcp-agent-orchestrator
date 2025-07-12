@@ -23,39 +23,46 @@ class CoordinationOrchestrator:
     """
     Orchestrates coordination between multiple MCP agent servers
     """
-    
+
     def __init__(self):
         self.agent_sessions: Dict[str, ClientSession] = {}
         self.agent_configs = {
             "backend-dev": {
                 "command": "python",
-                "args": ["../mcp-servers/real-mcp-server.py", "agent-001", "backend-dev"],
-                "description": "Backend Development Agent"
+                "args": [
+                    "../mcp-servers/real-mcp-server.py",
+                    "agent-001",
+                    "backend-dev",
+                ],
+                "description": "Backend Development Agent",
             },
             "frontend-dev": {
-                "command": "python", 
-                "args": ["../mcp-servers/real-mcp-server.py", "agent-002", "frontend-dev"],
-                "description": "Frontend Development Agent"
+                "command": "python",
+                "args": [
+                    "../mcp-servers/real-mcp-server.py",
+                    "agent-002",
+                    "frontend-dev",
+                ],
+                "description": "Frontend Development Agent",
             },
             "tester": {
                 "command": "python",
                 "args": ["../mcp-servers/real-mcp-server.py", "agent-003", "tester"],
-                "description": "Testing Agent"
-            }
+                "description": "Testing Agent",
+            },
         }
-    
+
     async def start_coordination(self):
         """Start coordination between all agents"""
         logger.info("🚀 Starting Multi-Agent Coordination using Real MCP Protocol")
-        
+
         # Connect to all agent servers
         sessions = {}
         for agent_role, config in self.agent_configs.items():
             server_params = StdioServerParameters(
-                command=config["command"],
-                args=config["args"]
+                command=config["command"], args=config["args"]
             )
-            
+
             try:
                 # Start server connection
                 read, write = await stdio_client(server_params).__aenter__()
@@ -63,46 +70,46 @@ class CoordinationOrchestrator:
                 await session.initialize()
                 sessions[agent_role] = session
                 logger.info(f"✅ Connected to {config['description']}")
-                
+
             except Exception as e:
                 logger.error(f"❌ Failed to connect to {agent_role}: {e}")
                 continue
-        
+
         self.agent_sessions = sessions
-        
+
         # Demonstrate coordination workflow
         await self._demonstrate_coordination_workflow()
-        
+
         # Cleanup connections
         for session in sessions.values():
             await session.__aexit__(None, None, None)
-    
+
     async def _demonstrate_coordination_workflow(self):
         """Demonstrate real agent coordination workflow"""
         logger.info("\n🎭 Starting Multi-Agent Development Workflow")
-        
+
         # 1. Backend creates API specification
         if "backend-dev" in self.agent_sessions:
             await self._create_api_spec()
-        
+
         # 2. Frontend creates UI component
         if "frontend-dev" in self.agent_sessions:
             await self._create_ui_component()
-        
+
         # 3. Tester creates test cases
         if "tester" in self.agent_sessions:
             await self._create_test_cases()
-        
+
         # 4. Cross-agent coordination
         await self._coordinate_agents()
-        
+
         # 5. Status check
         await self._check_all_statuses()
-    
+
     async def _create_api_spec(self):
         """Backend agent creates API specification"""
         backend_session = self.agent_sessions["backend-dev"]
-        
+
         api_spec = """
         {
           "endpoints": {
@@ -118,24 +125,24 @@ class CoordinationOrchestrator:
           }
         }
         """
-        
+
         result = await backend_session.call_tool(
             "create_artifact",
             {
                 "name": "user-api-spec",
                 "type": "docs",
                 "content": api_spec,
-                "language": "json"
-            }
+                "language": "json",
+            },
         )
-        
+
         logger.info("📋 Backend: Created API specification")
         print(f"Result: {result}")
-    
+
     async def _create_ui_component(self):
         """Frontend agent creates UI component"""
         frontend_session = self.agent_sessions["frontend-dev"]
-        
+
         ui_component = """
         import React, { useState, useEffect } from 'react';
         
@@ -163,24 +170,24 @@ class CoordinationOrchestrator:
         
         export default UserList;
         """
-        
+
         result = await frontend_session.call_tool(
             "create_artifact",
             {
                 "name": "UserList.jsx",
                 "type": "code",
                 "content": ui_component,
-                "language": "javascript"
-            }
+                "language": "javascript",
+            },
         )
-        
+
         logger.info("🎨 Frontend: Created UI component")
         print(f"Result: {result}")
-    
+
     async def _create_test_cases(self):
         """Tester agent creates test cases"""
         tester_session = self.agent_sessions["tester"]
-        
+
         test_cases = """
         import pytest
         import requests
@@ -206,35 +213,38 @@ class CoordinationOrchestrator:
                 assert response.status_code == 200
                 assert 'id' in response.json()
         """
-        
+
         result = await tester_session.call_tool(
             "create_artifact",
             {
                 "name": "test_user_api.py",
-                "type": "test", 
+                "type": "test",
                 "content": test_cases,
-                "language": "python"
-            }
+                "language": "python",
+            },
         )
-        
+
         logger.info("🧪 Tester: Created test cases")
         print(f"Result: {result}")
-    
+
     async def _coordinate_agents(self):
         """Demonstrate inter-agent coordination"""
         logger.info("\n💬 Coordinating between agents...")
-        
+
         # Backend sends message to Frontend
-        if "backend-dev" in self.agent_sessions and "frontend-dev" in self.agent_sessions:
+        if (
+            "backend-dev" in self.agent_sessions
+            and "frontend-dev" in self.agent_sessions
+        ):
             await self.agent_sessions["backend-dev"].call_tool(
                 "send_message",
                 {
                     "to_agent": "agent-002",
                     "message": "API specification is ready. Please ensure your UI component handles all endpoints correctly.",
-                    "priority": "high"
-                }
+                    "priority": "high",
+                },
             )
-        
+
         # Frontend responds to Backend
         if "frontend-dev" in self.agent_sessions:
             await self.agent_sessions["frontend-dev"].call_tool(
@@ -242,10 +252,10 @@ class CoordinationOrchestrator:
                 {
                     "to_agent": "agent-001",
                     "message": "UI component created. Added error handling for API calls. Ready for integration testing.",
-                    "priority": "medium"
-                }
+                    "priority": "medium",
+                },
             )
-        
+
         # Tester coordinates with both
         if "tester" in self.agent_sessions:
             await self.agent_sessions["tester"].call_tool(
@@ -253,35 +263,34 @@ class CoordinationOrchestrator:
                 {
                     "to_agent": "agent-001",
                     "message": "Test cases created for API endpoints. Please run integration tests before deployment.",
-                    "priority": "high"
-                }
+                    "priority": "high",
+                },
             )
-            
+
             await self.agent_sessions["tester"].call_tool(
                 "send_message",
                 {
-                    "to_agent": "agent-002", 
+                    "to_agent": "agent-002",
                     "message": "UI tests needed. Please add data-testid attributes to components for E2E testing.",
-                    "priority": "medium"
-                }
+                    "priority": "medium",
+                },
             )
-    
+
     async def _check_all_statuses(self):
         """Check status of all agents"""
         logger.info("\n📊 Checking coordination status...")
-        
+
         for role, session in self.agent_sessions.items():
             try:
                 result = await session.call_tool(
-                    "get_coordination_status",
-                    {"include_history": True}
+                    "get_coordination_status", {"include_history": True}
                 )
                 print(f"\n{role.upper()} STATUS:")
                 print("=" * 50)
                 for content in result:
-                    if hasattr(content, 'text'):
+                    if hasattr(content, "text"):
                         print(content.text)
-                        
+
             except Exception as e:
                 logger.error(f"Failed to get status for {role}: {e}")
 
@@ -289,15 +298,15 @@ class CoordinationOrchestrator:
 async def main():
     """Main coordination demo"""
     orchestrator = CoordinationOrchestrator()
-    
+
     try:
         await orchestrator.start_coordination()
         logger.info("✅ Coordination demo completed successfully")
-        
+
     except Exception as e:
         logger.error(f"❌ Coordination failed: {e}")
         raise
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

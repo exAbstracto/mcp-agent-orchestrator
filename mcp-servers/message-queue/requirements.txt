@@ -1,0 +1,17 @@
+# Message Queue MCP Server Dependencies
+# Core dependencies for async messaging and JSON-RPC protocol
+
+# No external dependencies required - uses only Python standard library
+# asyncio (built-in) - for async operations
+# json (built-in) - for JSON-RPC protocol
+# logging (built-in) - for logging
+# dataclasses (built-in) - for data structures
+# collections (built-in) - for deque and defaultdict
+# typing (built-in) - for type hints
+# uuid (built-in) - for message IDs
+# time (built-in) - for timestamps and performance monitoring
+
+# Development and testing dependencies (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0 

@@ -1,9 +1,18 @@
 """
 Task Coordinator MCP Server
 
-A Model Context Protocol server for managing development tasks,
-assignments, and workflow coordination in multi-agent systems.
+This package provides task coordination and dependency management capabilities
+for the multi-agent development system.
 """
 
-__version__ = "1.0.0"
-__author__ = "MCP Agent Orchestrator Team" 
+from .task_coordinator_server import TaskCoordinatorServer
+from .models.task import Task, TaskStatus
+from .models.dependency import Dependency, DependencyGraph
+
+__all__ = [
+    "TaskCoordinatorServer",
+    "Task",
+    "TaskStatus",
+    "Dependency",
+    "DependencyGraph",
+]
