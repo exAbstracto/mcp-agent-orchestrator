@@ -17,7 +17,6 @@ from src.services.cleanup_service import CleanupService
 from src.file_workspace_server import FileWorkspaceServer
 
 
-@pytest.mark.us009
 class TestFileLockAcquisitionAndRelease:
     """Test that file locks can be acquired and released"""
     
@@ -113,7 +112,6 @@ class TestFileLockAcquisitionAndRelease:
         assert "permission denied" in result["error"].lower()
 
 
-@pytest.mark.us009
 class TestLockTimeout:
     """Test that lock requests include timeout duration"""
     
@@ -173,7 +171,6 @@ class TestLockTimeout:
         assert "invalid timeout" in result["error"].lower()
 
 
-@pytest.mark.us009
 class TestConcurrentLockQueuing:
     """Test that concurrent lock attempts are queued"""
     
@@ -268,7 +265,6 @@ class TestConcurrentLockQueuing:
         assert cancel_result["cancelled"] is True
 
 
-@pytest.mark.us009
 class TestStaleLockCleanup:
     """Test that stale locks are cleaned up automatically"""
     
@@ -351,7 +347,6 @@ class TestStaleLockCleanup:
         assert status["agent_id"] == "agent-1"
 
 
-@pytest.mark.us009
 class TestLockStatusVisibility:
     """Test that lock status is visible to all agents"""
     
@@ -443,7 +438,6 @@ class TestLockStatusVisibility:
         assert queue_status["queued_agents"][1]["agent_id"] == "agent-3"
 
 
-@pytest.mark.us009
 class TestMCPServerIntegration:
     """Test MCP server integration with file locking tools"""
     
@@ -568,7 +562,6 @@ class TestMCPServerIntegration:
         assert status["status"] == "unlocked"
 
 
-@pytest.mark.us009
 class TestUS009Integration:
     """Integration tests to verify all US-009 acceptance criteria"""
     
@@ -622,6 +615,304 @@ class TestUS009Integration:
         assert final_status["status"] == "unlocked"
         
         print("✅ All US-009 acceptance criteria verified!")
+
+
+class TestMCPServerCoverage:
+    """Test MCP server functionality for better coverage"""
+    
+    def test_server_initialization_comprehensive(self):
+        """Test server initialization with different parameters"""
+        # Test custom initialization
+        server1 = FileWorkspaceServer("file-workspace", "1.0.0")
+        assert server1.name == "file-workspace"
+        assert server1.version == "1.0.0"
+        
+        # Test another custom initialization
+        server2 = FileWorkspaceServer("custom-file-workspace", "2.0.0")
+        assert server2.name == "custom-file-workspace"
+        assert server2.version == "2.0.0"
+        
+        # Verify all services are initialized
+        assert server2.locking_service is not None
+        assert server2.cleanup_service is not None
+        assert server2.server is not None
+        
+    def test_server_tools_registration(self):
+        """Test that all server tools are properly registered"""
+        server = FileWorkspaceServer("test-server", "1.0.0")
+        
+        # Verify the server has the MCP server instance
+        assert server.server is not None
+        
+        # Verify the main methods exist that would be called by tools
+        assert hasattr(server, 'acquire_file_lock')
+        assert hasattr(server, 'release_file_lock')
+        assert hasattr(server, 'get_file_lock_status')
+        assert hasattr(server, 'list_all_locks')
+        assert hasattr(server, 'force_release_lock')
+        
+    def test_force_release_lock_comprehensive(self):
+        """Test force release lock functionality"""
+        server = FileWorkspaceServer("force-test", "1.0.0")
+        
+        # First acquire a lock
+        acquire_result = server.acquire_file_lock({
+            "file_path": "/workspace/force-test.py",
+            "agent_id": "agent-1",
+            "timeout_seconds": 300
+        })
+        assert acquire_result["success"] is True
+        
+        # Force release the lock (admin operation)
+        force_result = server.force_release_lock({
+            "file_path": "/workspace/force-test.py"
+        })
+        assert force_result["success"] is True
+        
+        # Verify the lock is released
+        status = server.get_file_lock_status({"file_path": "/workspace/force-test.py"})
+        assert status["status"] == "unlocked"
+        
+    def test_server_error_handling(self):
+        """Test server error handling"""
+        server = FileWorkspaceServer("error-test", "1.0.0")
+        
+        # Test invalid file path
+        result = server.acquire_file_lock({
+            "file_path": "",  # Empty path
+            "agent_id": "agent-1",
+            "timeout_seconds": 300
+        })
+        assert result["success"] is False
+        assert "error" in result
+        
+        # Test missing agent_id - just verify the method handles the case
+        result = server.acquire_file_lock({
+            "file_path": "/workspace/test.py"
+            # Missing agent_id
+        })
+        # The result format might vary, but it should return something
+        assert result is not None
+
+
+class TestCleanupServiceCoverage:
+    """Test cleanup service functionality for better coverage"""
+    
+    def test_cleanup_service_initialization(self):
+        """Test cleanup service initialization"""
+        locking_service = LockingService()
+        cleanup_service = CleanupService(locking_service)
+        
+        assert cleanup_service.locking_service == locking_service
+        assert hasattr(cleanup_service, 'cleanup_expired_locks')
+        
+    @pytest.mark.asyncio
+    async def test_cleanup_service_comprehensive(self):
+        """Test cleanup service with various scenarios"""
+        service = LockingService()
+        cleanup_service = CleanupService(service)
+        
+        # Create some locks with different expiry times
+        service.acquire_lock(
+            file_path="/workspace/file1.py",
+            agent_id="agent-1",
+            timeout_seconds=1  # Short timeout
+        )
+        
+        service.acquire_lock(
+            file_path="/workspace/file2.py", 
+            agent_id="agent-2",
+            timeout_seconds=300  # Long timeout
+        )
+        
+        # Wait for first lock to expire
+        await asyncio.sleep(1.5)
+        
+        # Run cleanup
+        result = cleanup_service.cleanup_expired_locks()
+        
+        assert result["cleaned_count"] >= 1
+        assert isinstance(result["cleaned_files"], list)
+        
+        # Verify expired lock was cleaned but valid lock remains
+        status1 = service.get_lock_status("/workspace/file1.py")
+        status2 = service.get_lock_status("/workspace/file2.py")
+        
+        assert status1["status"] == "unlocked"
+        assert status2["status"] == "locked"
+        
+    def test_cleanup_service_empty_locks(self):
+        """Test cleanup service when no locks exist"""
+        service = LockingService()
+        cleanup_service = CleanupService(service)
+        
+        result = cleanup_service.cleanup_expired_locks()
+        
+        assert result["cleaned_count"] == 0
+        assert result["cleaned_files"] == []
+
+
+class TestFileLockModelCoverage:
+    """Test FileLock model for better coverage"""
+    
+    def test_file_lock_creation_comprehensive(self):
+        """Test FileLock creation with various parameters"""
+        # Test with all required parameters
+        acquired_at = datetime.now()
+        expires_at = acquired_at + timedelta(minutes=5)
+        
+        lock1 = FileLock(
+            lock_id="test-1",
+            file_path="/workspace/test1.py",
+            agent_id="agent-1",
+            acquired_at=acquired_at,
+            expires_at=expires_at,
+            status=LockStatus.LOCKED,
+            metadata={}
+        )
+        
+        assert lock1.lock_id == "test-1"
+        assert lock1.file_path == "/workspace/test1.py"
+        assert lock1.agent_id == "agent-1"
+        assert lock1.status == LockStatus.LOCKED
+        
+        # Test with different status
+        lock2 = FileLock(
+            lock_id="test-2",
+            file_path="/workspace/test2.py",
+            agent_id="agent-2",
+            acquired_at=acquired_at,
+            expires_at=expires_at,
+            status=LockStatus.EXPIRED,
+            metadata={"test": True}
+        )
+        
+        assert lock2.expires_at == expires_at
+        assert lock2.status == LockStatus.EXPIRED
+        assert lock2.metadata == {"test": True}
+        
+    def test_file_lock_expiry_check(self):
+        """Test FileLock expiry checking"""
+        # Create an expired lock
+        now = datetime.now()
+        past_time = now - timedelta(minutes=5)
+        acquired_time = now - timedelta(minutes=10)
+        
+        expired_lock = FileLock(
+            lock_id="expired-1",
+            file_path="/workspace/expired.py",
+            agent_id="agent-1",
+            acquired_at=acquired_time,
+            expires_at=past_time,
+            status=LockStatus.EXPIRED,
+            metadata={}
+        )
+        
+        assert expired_lock.is_expired() is True
+        
+        # Create a valid lock
+        future_time = now + timedelta(minutes=5)
+        valid_lock = FileLock(
+            lock_id="valid-1",
+            file_path="/workspace/valid.py",
+            agent_id="agent-1",
+            acquired_at=now,
+            expires_at=future_time,
+            status=LockStatus.LOCKED,
+            metadata={}
+        )
+        
+        assert valid_lock.is_expired() is False
+        
+    def test_file_lock_to_dict(self):
+        """Test FileLock serialization"""
+        now = datetime.now()
+        expires_at = now + timedelta(minutes=5)
+        lock = FileLock(
+            lock_id="dict-test",
+            file_path="/workspace/dict.py",
+            agent_id="agent-1",
+            acquired_at=now,
+            expires_at=expires_at,
+            status=LockStatus.LOCKED,
+            metadata={"key": "value"}
+        )
+        
+        lock_dict = lock.to_dict()
+        
+        assert isinstance(lock_dict, dict)
+        assert lock_dict["lock_id"] == "dict-test"
+        assert lock_dict["file_path"] == "/workspace/dict.py"
+        assert lock_dict["agent_id"] == "agent-1"
+        assert lock_dict["status"] == "locked"
+        assert "expires_at" in lock_dict
+        assert "acquired_at" in lock_dict
+        assert lock_dict["metadata"] == {"key": "value"}
+
+
+class TestLockingServiceAdvanced:
+    """Test advanced locking service functionality"""
+    
+    @pytest.mark.asyncio
+    async def test_queue_processing_comprehensive(self):
+        """Test queue processing functionality"""
+        service = LockingService()
+        
+        # Acquire initial lock
+        service.acquire_lock(
+            file_path="/workspace/queue-test.py",
+            agent_id="agent-1",
+            timeout_seconds=2  # Short timeout
+        )
+        
+        # Queue multiple requests
+        queue_result1 = service.queue_lock_request(
+            file_path="/workspace/queue-test.py",
+            agent_id="agent-2",
+            timeout_seconds=300
+        )
+        
+        queue_result2 = service.queue_lock_request(
+            file_path="/workspace/queue-test.py",
+            agent_id="agent-3", 
+            timeout_seconds=300
+        )
+        
+        assert queue_result1["queued"] is True
+        assert queue_result1["position"] == 1
+        assert queue_result2["queued"] is True
+        assert queue_result2["position"] == 2
+        
+        # Wait for initial lock to expire
+        await asyncio.sleep(2.5)
+        
+        # Process the queue (this would normally be done automatically)
+        # The queue should process the next request
+        queue_status = service.get_queue_status("/workspace/queue-test.py")
+        assert isinstance(queue_status, dict)
+        
+    def test_locking_service_edge_cases(self):
+        """Test locking service edge cases"""
+        service = LockingService()
+        
+        # Test with invalid timeout
+        result = service.acquire_lock(
+            file_path="/workspace/invalid-timeout.py",
+            agent_id="agent-1",
+            timeout_seconds=-1  # Invalid timeout
+        )
+        assert result["success"] is False
+        
+        # Test releasing non-existent lock
+        result = service.release_lock(
+            file_path="/workspace/non-existent.py",
+            agent_id="agent-1"
+        )
+        assert result["success"] is False
+        
+        # Test getting status of non-existent file
+        status = service.get_lock_status("/workspace/non-existent.py")
+        assert status["status"] == "unlocked"
 
 
 if __name__ == "__main__":

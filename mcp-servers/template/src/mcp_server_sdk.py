@@ -16,18 +16,18 @@ from mcp.types import Tool, TextContent
 class MCPServerSDK:
     """
     MCP Server implementation using the official MCP Python SDK.
-    
+
     This server provides:
     - Official MCP SDK integration
     - Basic server information tools
     - Echo functionality for testing
     - Proper logging and error handling
     """
-    
+
     def __init__(self, name: str, version: str):
         """
         Initialize the MCP server with official SDK.
-        
+
         Args:
             name: The server name
             version: The server version
@@ -36,12 +36,12 @@ class MCPServerSDK:
         self.version = version
         self.server = Server(name)
         self.logger = self._setup_logging()
-        
+
         # Register tools
         self._register_tools()
-        
+
         self.logger.info(f"Initialized {name} v{version} with MCP SDK")
-    
+
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration."""
         logger = logging.getLogger(self.name)
@@ -57,10 +57,10 @@ class MCPServerSDK:
             logger.addHandler(handler)
 
         return logger
-    
+
     def _register_tools(self) -> None:
         """Register MCP tools using the official SDK"""
-        
+
         @self.server.list_tools()
         async def list_tools() -> List[Tool]:
             """List available tools"""
@@ -89,7 +89,7 @@ class MCPServerSDK:
                     },
                 ),
             ]
-        
+
         @self.server.call_tool()
         async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             """Handle tool calls using the MCP SDK"""
@@ -143,6 +143,7 @@ class MCPServerSDK:
     def _get_timestamp(self) -> str:
         """Get current timestamp as ISO string"""
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc).isoformat()
 
     async def run(self) -> None:
@@ -152,7 +153,9 @@ class MCPServerSDK:
 
 
 # Factory function for consistency
-def create_mcp_server(name: str = "template-server", version: str = "1.0.0") -> MCPServerSDK:
+def create_mcp_server(
+    name: str = "template-server", version: str = "1.0.0"
+) -> MCPServerSDK:
     """Factory function to create an MCP server instance"""
     return MCPServerSDK(name, version)
 

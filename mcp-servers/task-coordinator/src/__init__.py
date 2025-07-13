@@ -6,7 +6,10 @@ for the multi-agent development system.
 """
 
 # MCP Server implementation using official MCP SDK
-from .task_coordinator_server_sdk import TaskCoordinatorServerSDK, create_task_coordinator_server
+from .task_coordinator_server_sdk import (
+    TaskCoordinatorServerSDK,
+    create_task_coordinator_server,
+)
 
 # Default implementation
 TaskCoordinatorServer = TaskCoordinatorServerSDK
@@ -16,7 +19,7 @@ from .models.dependency import Dependency, DependencyGraph
 
 __all__ = [
     "TaskCoordinatorServer",
-    "TaskCoordinatorServerSDK", 
+    "TaskCoordinatorServerSDK",
     "create_task_coordinator_server",
     "Task",
     "TaskStatus",
