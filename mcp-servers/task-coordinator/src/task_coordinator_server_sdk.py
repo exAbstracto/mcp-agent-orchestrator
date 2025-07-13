@@ -22,18 +22,18 @@ from .notification_system import NotificationSystem
 class TaskCoordinatorServerSDK:
     """
     Task Coordinator MCP Server using the official MCP Python SDK.
-    
+
     This server provides:
     - Official MCP SDK integration
     - Task creation and dependency management
     - Dependency graph visualization
     - Task lifecycle coordination
     """
-    
+
     def __init__(self, name: str = "task-coordinator", version: str = "1.0.0"):
         """
         Initialize the MCP task coordinator server with official SDK.
-        
+
         Args:
             name: The server name
             version: The server version
@@ -42,18 +42,18 @@ class TaskCoordinatorServerSDK:
         self.version = version
         self.server = Server(name)
         self.logger = self._setup_logging()
-        
+
         # Initialize dependency management components
         self.dependency_graph = DependencyGraph()
         self.notification_system = NotificationSystem()
-        
+
         # Set up notification system in dependency graph
         self.dependency_graph.set_notification_system(self.notification_system)
-        
+
         # Register tools and resources
         self._register_tools()
         self._register_resources()
-        
+
         self.logger.info(f"Initialized {name} v{version} with MCP SDK")
 
     def _setup_logging(self) -> logging.Logger:
@@ -70,10 +70,10 @@ class TaskCoordinatorServerSDK:
             logger.addHandler(handler)
 
         return logger
-    
+
     def _register_tools(self) -> None:
         """Register MCP tools using the official SDK"""
-        
+
         @self.server.list_tools()
         async def list_tools() -> List[Tool]:
             """List available task coordinator tools"""
@@ -84,18 +84,27 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "task_id": {"type": "string", "description": "Unique task identifier"},
+                            "task_id": {
+                                "type": "string",
+                                "description": "Unique task identifier",
+                            },
                             "title": {"type": "string", "description": "Task title"},
-                            "description": {"type": "string", "description": "Task description"},
-                            "priority": {"type": "integer", "description": "Task priority (1-10)"},
+                            "description": {
+                                "type": "string",
+                                "description": "Task description",
+                            },
+                            "priority": {
+                                "type": "integer",
+                                "description": "Task priority (1-10)",
+                            },
                             "dependencies": {
-                                "type": "array", 
+                                "type": "array",
                                 "description": "List of dependent task IDs",
-                                "items": {"type": "string"}
-                            }
+                                "items": {"type": "string"},
+                            },
                         },
-                        "required": ["task_id", "title"]
-                    }
+                        "required": ["task_id", "title"],
+                    },
                 ),
                 Tool(
                     name="add_dependency",
@@ -103,11 +112,17 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "dependent_task_id": {"type": "string", "description": "Task that depends on another"},
-                            "depends_on_task_id": {"type": "string", "description": "Task that is depended upon"}
+                            "dependent_task_id": {
+                                "type": "string",
+                                "description": "Task that depends on another",
+                            },
+                            "depends_on_task_id": {
+                                "type": "string",
+                                "description": "Task that is depended upon",
+                            },
                         },
-                        "required": ["dependent_task_id", "depends_on_task_id"]
-                    }
+                        "required": ["dependent_task_id", "depends_on_task_id"],
+                    },
                 ),
                 Tool(
                     name="get_blocked_tasks",
@@ -115,8 +130,8 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {},
-                        "additionalProperties": False
-                    }
+                        "additionalProperties": False,
+                    },
                 ),
                 Tool(
                     name="get_ready_tasks",
@@ -124,8 +139,8 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {},
-                        "additionalProperties": False
-                    }
+                        "additionalProperties": False,
+                    },
                 ),
                 Tool(
                     name="resolve_dependencies",
@@ -133,10 +148,13 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {
-                            "completed_task_id": {"type": "string", "description": "ID of the completed task"}
+                            "completed_task_id": {
+                                "type": "string",
+                                "description": "ID of the completed task",
+                            }
                         },
-                        "required": ["completed_task_id"]
-                    }
+                        "required": ["completed_task_id"],
+                    },
                 ),
                 Tool(
                     name="get_visualization_data",
@@ -144,11 +162,11 @@ class TaskCoordinatorServerSDK:
                     inputSchema={
                         "type": "object",
                         "properties": {},
-                        "additionalProperties": False
-                    }
-                )
+                        "additionalProperties": False,
+                    },
+                ),
             ]
-        
+
         @self.server.call_tool()
         async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
             """Handle tool calls using the MCP SDK"""
@@ -168,19 +186,19 @@ class TaskCoordinatorServerSDK:
                     result = self._get_visualization_data(arguments)
                 else:
                     result = {"error": f"Unknown tool: {name}"}
-                
+
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             except DependencyError as e:
                 self.logger.error(f"Dependency error in tool {name}: {str(e)}")
                 return [TextContent(type="text", text=f"Dependency Error: {str(e)}")]
             except Exception as e:
                 self.logger.error(f"Error in tool {name}: {str(e)}")
                 return [TextContent(type="text", text=f"Error: {str(e)}")]
-    
+
     def _register_resources(self) -> None:
         """Register MCP resources using the official SDK"""
-        
+
         @self.server.list_resources()
         async def list_resources() -> List[Resource]:
             """List available resources"""
@@ -189,22 +207,22 @@ class TaskCoordinatorServerSDK:
                     uri="tasks://blocked",
                     name="Blocked Tasks",
                     description="List of tasks that are blocked by dependencies",
-                    mimeType="application/json"
+                    mimeType="application/json",
                 ),
                 Resource(
                     uri="tasks://ready",
-                    name="Ready Tasks", 
+                    name="Ready Tasks",
                     description="List of tasks that are ready to be executed",
-                    mimeType="application/json"
+                    mimeType="application/json",
                 ),
                 Resource(
                     uri="tasks://graph",
                     name="Dependency Graph",
                     description="Visualization data for the dependency graph",
-                    mimeType="application/json"
-                )
+                    mimeType="application/json",
+                ),
             ]
-        
+
         @self.server.read_resource()
         async def read_resource(uri: str) -> str:
             """Read resource content"""
@@ -219,7 +237,7 @@ class TaskCoordinatorServerSDK:
                 return json.dumps(graph_data, indent=2)
             else:
                 raise ValueError(f"Unknown resource: {uri}")
-    
+
     # Tool implementation methods that use the core business logic
     def _create_task(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Create a task using core logic"""
@@ -252,7 +270,7 @@ class TaskCoordinatorServerSDK:
             }
         except Exception as e:
             return {"error": str(e)}
-    
+
     def _add_dependency(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Add dependency using core logic"""
         try:
@@ -260,7 +278,9 @@ class TaskCoordinatorServerSDK:
             depends_on_task_id = arguments.get("depends_on_task_id")
 
             if not dependent_task_id or not depends_on_task_id:
-                raise ValueError("dependent_task_id and depends_on_task_id are required")
+                raise ValueError(
+                    "dependent_task_id and depends_on_task_id are required"
+                )
 
             # Add dependency (this will check for cycles)
             self.dependency_graph.add_dependency(dependent_task_id, depends_on_task_id)
@@ -271,7 +291,7 @@ class TaskCoordinatorServerSDK:
             }
         except Exception as e:
             return {"error": str(e)}
-    
+
     def _get_blocked_tasks(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get blocked tasks using core logic"""
         try:
@@ -279,7 +299,7 @@ class TaskCoordinatorServerSDK:
             return {"blocked_tasks": blocked_tasks, "count": len(blocked_tasks)}
         except Exception as e:
             return {"error": str(e)}
-    
+
     def _get_ready_tasks(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get ready tasks using core logic"""
         try:
@@ -287,7 +307,7 @@ class TaskCoordinatorServerSDK:
             return {"ready_tasks": ready_tasks, "count": len(ready_tasks)}
         except Exception as e:
             return {"error": str(e)}
-    
+
     def _resolve_dependencies(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Resolve dependencies using core logic"""
         try:
@@ -309,7 +329,7 @@ class TaskCoordinatorServerSDK:
             }
         except Exception as e:
             return {"error": str(e)}
-    
+
     def _get_visualization_data(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Get visualization data using core logic"""
         try:
@@ -317,7 +337,7 @@ class TaskCoordinatorServerSDK:
             return visualization_data
         except Exception as e:
             return {"error": str(e)}
-    
+
     async def run(self) -> None:
         """Run the MCP server using the official SDK"""
         self.logger.info(f"Starting {self.name} v{self.version} with MCP SDK")
@@ -325,7 +345,9 @@ class TaskCoordinatorServerSDK:
 
 
 # Factory function for consistency
-def create_task_coordinator_server(name: str = "task-coordinator", version: str = "1.0.0") -> TaskCoordinatorServerSDK:
+def create_task_coordinator_server(
+    name: str = "task-coordinator", version: str = "1.0.0"
+) -> TaskCoordinatorServerSDK:
     """Factory function to create a task coordinator server instance"""
     return TaskCoordinatorServerSDK(name, version)
 

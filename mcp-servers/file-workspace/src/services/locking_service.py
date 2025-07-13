@@ -119,7 +119,17 @@ class LockingService:
         
         # Process any queued requests for this file (if event loop is running)
         try:
-            asyncio.create_task(self._process_queue_for_file(file_path))
+            # Check if there's a running event loop
+            asyncio.get_running_loop()
+            
+            def handle_task_completion(task):
+                try:
+                    task.result()  # This will raise any exception that occurred
+                except Exception:
+                    pass  # Silently ignore exceptions from background processing
+            
+            task = asyncio.create_task(self._process_queue_for_file(file_path))
+            task.add_done_callback(handle_task_completion)
         except RuntimeError:
             # No event loop running, skip async processing
             pass
@@ -413,7 +423,17 @@ class LockingService:
         
         # Process any queued requests for this file (if event loop is running)
         try:
-            asyncio.create_task(self._process_queue_for_file(file_path))
+            # Check if there's a running event loop
+            asyncio.get_running_loop()
+            
+            def handle_task_completion(task):
+                try:
+                    task.result()  # This will raise any exception that occurred
+                except Exception:
+                    pass  # Silently ignore exceptions from background processing
+            
+            task = asyncio.create_task(self._process_queue_for_file(file_path))
+            task.add_done_callback(handle_task_completion)
         except RuntimeError:
             # No event loop running, skip async processing
             pass
