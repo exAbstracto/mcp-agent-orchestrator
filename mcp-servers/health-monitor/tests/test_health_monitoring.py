@@ -24,8 +24,8 @@ from src.services.heartbeat_service import HeartbeatService
 from src.services.alert_service import AlertService
 
 # We'll create a simple test server class to test the logic without MCP dependency
-class TestHealthMonitoringServer:
-    """Simple test server for health monitoring logic"""
+class MockHealthMonitoringServer:
+    """Simple mock server for health monitoring logic"""
     
     def __init__(self, name: str, version: str):
         self.name = name
@@ -106,7 +106,7 @@ class TestHealthMonitoringServer:
         )
 
 # Use the test server instead of the real one for now
-HealthMonitoringServer = TestHealthMonitoringServer
+HealthMonitoringServer = MockHealthMonitoringServer
 
 
 class TestAgentHeartbeats:
@@ -388,7 +388,6 @@ class TestHealthHistory:
         assert history[2].status == HealthStatus.HEALTHY
 
 
-@pytest.mark.us008
 class TestUS008Integration:
     """Integration tests for US-008 complete functionality"""
     

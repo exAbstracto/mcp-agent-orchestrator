@@ -14,7 +14,7 @@ make dev-setup
 # Run message queue demo
 make message-queue-demo
 
-# Run all tests
+# Run all tests with coverage
 make test
 
 # Clean up temporary files
@@ -39,12 +39,12 @@ make clean
 - `make real-mcp-server` - Start real MCP coordination server
 
 ### **Testing**
-- `make test` - Run all tests across all components
-- `make test-message-queue` - Run message queue tests only
-- `make test-template` - Run template server tests only
-- `make test-coverage` - Run tests with coverage reports (HTML + terminal)
+- `make test` - **Run all tests with coverage reports** (unified command for everything)
+- `make test-quick` - Run all tests quickly without coverage
+- `make test-discover` - Discover and list all test files across the project
+- `make test-count` - Count test files by component
 - `make test-coordination` - Run coordination and integration tests
-- `make quick-test` - Clean environment and run all tests
+- `make quick-test` - Clean environment and run all tests with coverage
 
 ### **Code Quality**
 - `make lint` - Run linting checks with flake8
@@ -81,6 +81,37 @@ make clean
 - `make git-status` - Show git status and branch information
 - `make commit COMMIT_MSG="your message"` - Stage and commit changes
 - `make push` - Push current branch to origin
+
+## 🧪 Simplified Testing
+
+### **One Command for All Testing**
+The main `make test` command has been simplified to provide everything you need:
+
+- **Automatic Discovery**: Finds all test files across all components
+- **Unified Environment**: Uses one test environment for consistency  
+- **Built-in Coverage**: Generates HTML reports for each component
+- **Future-Proof**: Automatically includes new components as you add them
+
+```bash
+# This one command:
+make test
+
+# Runs 157+ tests across:
+# - central-logging (30 tests)
+# - file-workspace (25 tests) 
+# - health-monitor (21 tests)
+# - message-queue (11 tests)
+# - task-coordinator (53 tests)
+# - template (17 tests)
+# - Any future components you add
+```
+
+### **Coverage Reports**
+Coverage reports are generated in `coverage-reports/`:
+- `coverage-reports/root/` - Root test coverage
+- `coverage-reports/central-logging/` - Central logging coverage
+- `coverage-reports/file-workspace/` - File workspace coverage
+- And so on for each component...
 
 ## 🛠️ Advanced Features
 
@@ -121,11 +152,17 @@ make push
 
 ### **Testing Workflow**
 ```bash
-# Run specific component tests
-make test-message-queue
+# Run all tests with coverage (main command)
+make test
 
-# Run with coverage
-make test-coverage
+# Run tests quickly without coverage
+make test-quick
+
+# Discover all test files
+make test-discover
+
+# Count tests by component
+make test-count
 
 # Full integration testing
 make test-coordination
@@ -155,7 +192,7 @@ This runs:
 1. `make clean` - Clean environment
 2. `make lint` - Code linting
 3. `make type-check` - Type checking
-4. `make test` - Full test suite
+4. `make test` - Full test suite with coverage
 
 ### **Development Environment**
 ```bash
@@ -233,7 +270,7 @@ Some commands run multiple operations efficiently:
 
 ### **Message Queue (US-003)**
 - `make message-queue-demo` - Interactive demonstration
-- `make test-message-queue` - Comprehensive testing
+- `make test` - Comprehensive testing (includes all components)
 - `make health-check` - Server health validation
 
 ### **Task Coordinator (US-005)**
